@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Tracker Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0b1120; color: #e2e8f0; min-height: 100vh; }
+.back-link { display: block; padding: 12px 24px; color: #64748b; text-decoration: none; font-size: 14px; }
+.back-link:hover { color: #94a3b8; }
+
+/* Login */
+.login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+.login-box { background: #131c31; border: 1px solid #1e293b; border-radius: 16px; padding: 40px; width: 380px; max-width: 100%; }
+.login-box h1 { font-size: 28px; font-weight: 800; color: #3b82f6; margin-bottom: 6px; }
+.login-box p { color: #64748b; font-size: 14px; margin-bottom: 28px; }
+.login-box .form-group { margin-bottom: 18px; }
+.login-box .form-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+.login-box .form-group input { width: 100%; padding: 12px 14px; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; color: #e2e8f0; font-size: 14px; outline: none; }
+.login-box .form-group input:focus { border-color: #3b82f6; }
+.login-box .btn { width: 100%; }
+.login-error { color: #ef4444; font-size: 13px; margin-top: 12px; display: none; }
+
+/* Dashboard */
+.dashboard { display: none; }
+header { background: #131c31; border-bottom: 1px solid #1e293b; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+.header-left { display: flex; align-items: center; gap: 24px; }
+.header-logo { font-size: 22px; font-weight: 700; color: #3b82f6; }
+.header-month { font-size: 14px; color: #94a3b8; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#3b82f6,#8b5cf6); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+/* Summary */
+.summary { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+.summary-card { background: #131c31; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+.summary-card .label { font-size: 13px; color: #64748b; margin-bottom: 6px; }
+.summary-card .value { font-size: 26px; font-weight: 700; }
+.summary-card .change { font-size: 13px; margin-top: 4px; }
+.text-green { color: #22c55e; }
+.text-red { color: #ef4444; }
+
+/* Add Transaction */
+.add-section { background: #131c31; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.add-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+.toggle-group { display: flex; gap: 0; margin-bottom: 16px; }
+.toggle-btn { padding: 8px 24px; border: 1px solid #1e293b; background: transparent; color: #94a3b8; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s; }
+.toggle-btn:first-child { border-radius: 8px 0 0 8px; }
+.toggle-btn:last-child { border-radius: 0 8px 8px 0; }
+.toggle-btn.active-income { background: rgba(34,197,94,.15); border-color: #22c55e; color: #22c55e; }
+.toggle-btn.active-expense { background: rgba(239,68,68,.15); border-color: #ef4444; color: #ef4444; }
+.add-form { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; align-items: end; }
+.add-form .form-group label { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; }
+.add-form .form-group input, .add-form .form-group select { width: 100%; padding: 10px 12px; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; color: #e2e8f0; font-size: 13px; outline: none; }
+.add-form .form-group input:focus, .add-form .form-group select:focus { border-color: #3b82f6; }
+.add-form .btn { padding: 10px 20px; white-space: nowrap; }
+
+/* Charts */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #131c31; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; }
+.chart-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; padding: 0 8px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; }
+.bar-income { width: 100%; max-width: 28px; background: #22c55e; border-radius: 4px 4px 0 0; transition: height .4s; }
+.bar-expense { width: 100%; max-width: 28px; background: #ef4444; border-radius: 4px 4px 0 0; transition: height .4s; }
+.bar-label { font-size: 10px; color: #64748b; margin-top: 4px; }
+.chart-legend { display: flex; gap: 16px; margin-top: 12px; justify-content: center; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+.pie-container { display: flex; align-items: center; gap: 24px; }
+.pie-chart { width: 140px; height: 140px; border-radius: 50%; flex-shrink: 0; }
+.pie-legend { display: flex; flex-direction: column; gap: 6px; }
+.pie-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #94a3b8; }
+.pie-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* Table */
+.table-section { background: #131c31; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+.table-section h4 { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 10px 12px; font-size: 12px; color: #64748b; font-weight: 500; border-bottom: 1px solid #1e293b; }
+td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #1e293b; }
+tr:last-child td { border-bottom: none; }
+.amount-income { color: #22c55e; font-weight: 600; }
+.amount-expense { color: #ef4444; font-weight: 600; }
+.delete-btn { background: none; border: none; color: #475569; cursor: pointer; padding: 4px; }
+.delete-btn:hover { color: #ef4444; }
+.btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-primary { background: #3b82f6; color: #fff; }
+.btn-primary:hover { background: #2563eb; }
+@media (max-width: 768px) { .summary { grid-template-columns: 1fr; } .charts-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="#"><i class="fas fa-arrow-left"></i> Back to Project</a>
+
+<!-- Login -->
+<div class="login-page" id="loginPage">
+  <div class="login-box">
+    <h1>FinanceTracker</h1>
+    <p>Sign in to your dashboard</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" value="demo@example.com">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" value="password">
+    </div>
+    <div class="login-error" id="loginError">Invalid credentials. Try demo@example.com / password</div>
+    <button class="btn btn-primary" onclick="handleLogin()" style="margin-top:8px">Sign In</button>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard" id="dashboard">
+  <header>
+    <div class="header-left">
+      <div class="header-logo">FinanceTracker</div>
+      <div class="header-month" id="headerMonth"></div>
+    </div>
+    <div class="header-right">
+      <div class="avatar" id="userAvatar">D</div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Summary -->
+    <div class="summary">
+      <div class="summary-card">
+        <div class="label">Total Balance</div>
+        <div class="value text-green" id="totalBalance">$24,560.00</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Income this month <i class="fas fa-arrow-up text-green" style="margin-left:4px"></i></div>
+        <div class="value text-green" id="totalIncome">$8,240.00</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Expenses this month <i class="fas fa-arrow-down text-red" style="margin-left:4px"></i></div>
+        <div class="value text-red" id="totalExpense">$3,180.00</div>
+      </div>
+    </div>
+
+    <!-- Add Transaction -->
+    <div class="add-section">
+      <h3><i class="fas fa-plus-circle" style="color:#3b82f6;margin-right:8px"></i> Add Transaction</h3>
+      <div class="toggle-group">
+        <button class="toggle-btn active-income" id="toggleIncome" onclick="setType('income')"><i class="fas fa-arrow-up"></i> Income</button>
+        <button class="toggle-btn" id="toggleExpense" onclick="setType('expense')"><i class="fas fa-arrow-down"></i> Expense</button>
+      </div>
+      <div class="add-form">
+        <div class="form-group">
+          <label>Amount</label>
+          <input type="number" id="txAmount" placeholder="0.00" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="txCategory">
+            <option value="Salary">Salary</option>
+            <option value="Freelance">Freelance</option>
+            <option value="Food">Food</option>
+            <option value="Transport">Transport</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Bills">Bills</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="txDescription" placeholder="e.g. Grocery store">
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="txDate">
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary" onclick="addTransaction()"><i class="fas fa-plus"></i> Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h4>Income vs Expenses (6 Months)</h4>
+        <div class="bar-chart" id="barChart"></div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Income</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Expenses</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h4>Expense Breakdown</h4>
+        <div class="pie-container">
+          <div class="pie-chart" id="pieChart"></div>
+          <div class="pie-legend" id="pieLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="table-section">
+      <h4><i class="fas fa-history" style="color:#3b82f6;margin-right:8px"></i> Recent Transactions</h4>
+      <table>
+        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+        <tbody id="transactionsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let txType = 'income';
+let transactions = [];
+let nextId = 100;
+
+const sampleTransactions = [
+  { id:1, date:'2026-06-15', category:'Salary', description:'Monthly salary', amount:6000, type:'income' },
+  { id:2, date:'2026-06-14', category:'Food', description:'Grocery store', amount:156.50, type:'expense' },
+  { id:3, date:'2026-06-13', category:'Shopping', description:'Amazon order', amount:89.99, type:'expense' },
+  { id:4, date:'2026-06-12', category:'Transport', description:'Gas station', amount:45.00, type:'expense' },
+  { id:5, date:'2026-06-10', category:'Freelance', description:'Web dev project', amount:1200, type:'income' }
+];
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+const barData = [
+  { income:6800, expense:2800 },
+  { income:7200, expense:3100 },
+  { income:7900, expense:2900 },
+  { income:8100, expense:3400 },
+  { income:7600, expense:3200 },
+  { income:8240, expense:3180 }
+];
+
+const pieData = [
+  { label:'Food', pct:30, color:'#f97316' },
+  { label:'Transport', pct:15, color:'#3b82f6' },
+  { label:'Shopping', pct:25, color:'#ec4899' },
+  { label:'Bills', pct:20, color:'#8b5cf6' },
+  { label:'Entertainment', pct:10, color:'#22c55e' }
+];
+
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value.trim();
+  if (email === 'demo@example.com' && pass === 'password') {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('userAvatar').textContent = email.charAt(0).toUpperCase();
+    init();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') handleLogin();
+});
+
+function init() {
+  const now = new Date();
+  const months_names = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('headerMonth').textContent = months_names[now.getMonth()] + ' ' + now.getFullYear();
+  document.getElementById('txDate').valueAsDate = now;
+  transactions = sampleTransactions.map(t => ({...t}));
+  nextId = 100;
+  renderAll();
+}
+
+function setType(type) {
+  txType = type;
+  document.getElementById('toggleIncome').className = 'toggle-btn' + (type === 'income' ? ' active-income' : '');
+  document.getElementById('toggleExpense').className = 'toggle-btn' + (type === 'expense' ? ' active-expense' : '');
+}
+
+function addTransaction() {
+  const amount = parseFloat(document.getElementById('txAmount').value);
+  const category = document.getElementById('txCategory').value;
+  const description = document.getElementById('txDescription').value.trim();
+  const date = document.getElementById('txDate').value;
+  if (!amount || amount <= 0) { alert('Enter a valid amount'); return; }
+  if (!description) { alert('Enter a description'); return; }
+  if (!date) { alert('Select a date'); return; }
+  transactions.unshift({ id:nextId++, date, category, description, amount, type:txType });
+  document.getElementById('txAmount').value = '';
+  document.getElementById('txDescription').value = '';
+  renderAll();
+}
+
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  renderAll();
+}
+
+function formatCurrency(n) { return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+function formatDate(str) {
+  const d = new Date(str + 'T00:00:00');
+  const months_short = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months_short[d.getMonth()] + ' ' + d.getDate();
+}
+
+function renderAll() {
+  renderSummary();
+  renderTransactions();
+  renderBarChart();
+  renderPieChart();
+}
+
+function renderSummary() {
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
+  const balance = totalIncome - totalExpense;
+  document.getElementById('totalBalance').textContent = formatCurrency(balance);
+  document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+  document.getElementById('totalExpense').textContent = formatCurrency(totalExpense);
+}
+
+function renderTransactions() {
+  const tbody = document.getElementById('transactionsBody');
+  tbody.innerHTML = transactions.map(t => `
+    <tr>
+      <td>${formatDate(t.date)}</td>
+      <td>${t.category}</td>
+      <td>${t.description}</td>
+      <td class="${t.type === 'income' ? 'amount-income' : 'amount-expense'}">${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}</td>
+      <td><button class="delete-btn" onclick="deleteTransaction(${t.id})"><i class="fas fa-trash-alt"></i></button></td>
+    </tr>
+  `).join('');
+}
+
+function renderBarChart() {
+  const allValues = barData.flatMap(d => [d.income, d.expense]);
+  const maxVal = Math.max(...allValues);
+  const container = document.getElementById('barChart');
+  container.innerHTML = barData.map((d,i) => {
+    const ih = (d.income / maxVal) * 150;
+    const eh = (d.expense / maxVal) * 150;
+    return `<div class="bar-group"><div class="bar-income" style="height:${ih}px"></div><div class="bar-expense" style="height:${eh}px"></div><div class="bar-label">${months[i]}</div></div>`;
+  }).join('');
+}
+
+function renderPieChart() {
+  const total = pieData.reduce((s,d) => s + d.pct, 0);
+  const conicParts = pieData.map(d => {
+    const pct = d.pct / total * 100;
+    return d.color + ' ' + d.pct + '%';
+  });
+  let cumulative = 0;
+  const gradientParts = pieData.map(d => {
+    const start = cumulative;
+    cumulative += d.pct;
+    return d.color + ' ' + start + '% ' + cumulative + '%';
+  });
+  document.getElementById('pieChart').style.background = 'conic-gradient(' + gradientParts.join(', ') + ')';
+  document.getElementById('pieLegend').innerHTML = pieData.map(d =>
+    '<div class="pie-legend-item"><div class="pie-legend-dot" style="background:' + d.color + '"></div>' + d.label + ' (' + d.pct + '%)</div>'
+  ).join('');
+}
+
+// Allow Enter key on login
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('loginEmail').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+  });
+});
+</script>
+</body>
+</html>
