@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import toast from 'react-hot-toast'
 import api from '../api/client'
 
 interface Props {
@@ -77,16 +78,23 @@ function Login({ onLogin }: Props) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSubmitting(true)
     try {
       const endpoint = isRegister ? '/auth/register' : '/auth/login'
       const res = await api.post(endpoint, { email, password })
+      toast.success(isRegister ? 'Account created!' : 'Welcome back!')
       onLogin(res.data.token)
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong')
+      const msg = err.response?.data?.message || 'Something went wrong'
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -117,8 +125,8 @@ function Login({ onLogin }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button style={styles.button} type="submit">
-            {isRegister ? 'Register' : 'Login'}
+          <button style={{ ...styles.button, opacity: submitting ? 0.6 : 1 }} type="submit" disabled={submitting}>
+            {submitting ? 'Please wait...' : (isRegister ? 'Register' : 'Login')}
           </button>
         </form>
         <div

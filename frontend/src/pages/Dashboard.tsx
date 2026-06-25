@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import toast from 'react-hot-toast'
 import api from '../api/client'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from 'recharts'
+import { SkeletonCard, SkeletonList } from '../components/Skeleton'
+import { EmptyState } from '../components/EmptyState'
+import { Pagination } from '../components/Pagination'
+import { SearchBar } from '../components/SearchBar'
+import { FilterBar } from '../components/FilterBar'
 
 interface Transaction {
   id: number
@@ -96,16 +102,40 @@ const styles: Record<string, React.CSSProperties> = {
   empty: { color: '#64748b', fontSize: '14px', textAlign: 'center' as const, padding: '20px' },
 }
 
+const TRANSACTIONS_PER_PAGE = 10;
+
 function Dashboard({ token, onLogout }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [adding, setAdding] = useState(false)
+  const [deleting, setDeleting] = useState<number | null>(null)
   const [type, setType] = useState<'income' | 'expense'>('expense')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(CATEGORIES[0])
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [transPage, setTransPage] = useState(1)
+  const [transSearch, setTransSearch] = useState('')
+  const [transTypeFilter, setTransTypeFilter] = useState('all')
+  const [transCatFilter, setTransCatFilter] = useState('all')
+  const sortedTransactions = [...transactions].reverse()
+  const filteredTransactions = useMemo(() => {
+    return sortedTransactions.filter(t => {
+      if (transSearch && !t.description.toLowerCase().includes(transSearch.toLowerCase())) return false;
+      if (transTypeFilter !== 'all' && t.type !== transTypeFilter) return false;
+      if (transCatFilter !== 'all' && t.category !== transCatFilter) return false;
+      return true;
+    });
+  }, [sortedTransactions, transSearch, transTypeFilter, transCatFilter]);
+  const totalTransPages = Math.max(1, Math.ceil(filteredTransactions.length / TRANSACTIONS_PER_PAGE))
+  const paginatedTransactions = filteredTransactions.slice(
+    (transPage - 1) * TRANSACTIONS_PER_PAGE,
+    transPage * TRANSACTIONS_PER_PAGE
+  )
 
   const fetchData = useCallback(async () => {
+    setLoading(true)
     try {
       const [transRes, summaryRes] = await Promise.all([
         api.get('/transactions'),
@@ -114,7 +144,10 @@ function Dashboard({ token, onLogout }: Props) {
       setTransactions(transRes.data)
       setSummary(summaryRes.data)
     } catch (err) {
+      toast.error('Failed to load data')
       console.error('Failed to fetch data:', err)
+    } finally {
+      setLoading(false)
     }
   }, [])
 
@@ -125,23 +158,54 @@ function Dashboard({ token, onLogout }: Props) {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!amount || parseFloat(amount) <= 0) return
+    setAdding(true)
     try {
       await api.post('/transactions', { type, amount: parseFloat(amount), category, description, date })
       setAmount('')
       setDescription('')
+      toast.success('Transaction added')
+      setTransPage(1)
       fetchData()
     } catch (err) {
+      toast.error('Failed to add transaction')
       console.error('Failed to add transaction:', err)
+    } finally {
+      setAdding(false)
     }
   }
 
   const handleDelete = async (id: number) => {
+    setDeleting(id)
     try {
       await api.delete(`/transactions/${id}`)
+      toast.success('Transaction deleted')
       fetchData()
     } catch (err) {
+      toast.error('Failed to delete transaction')
       console.error('Failed to delete transaction:', err)
+    } finally {
+      setDeleting(null)
     }
+  }
+
+  if (loading) {
+    return (
+      <div style={styles.wrapper}>
+        <div style={styles.header}>
+          <div style={styles.logo}><i className="fas fa-wallet" style={{ marginRight: '8px' }}></i>Finance Tracker</div>
+          <button style={styles.logoutBtn} onClick={onLogout}><i className="fas fa-sign-out-alt" style={{ marginRight: '6px' }}></i>Logout</button>
+        </div>
+        <div style={styles.cards}>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <div style={styles.formSection}>
+          <div style={styles.formTitle}>Add Transaction</div>
+          <SkeletonList count={3} />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -200,7 +264,9 @@ function Dashboard({ token, onLogout }: Props) {
               Date
               <input style={styles.input} type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </label>
-            <button style={styles.addBtn} type="submit"><i className="fas fa-plus" style={{ marginRight: '6px' }}></i>Add</button>
+            <button style={{ ...styles.addBtn, opacity: adding ? 0.6 : 1 }} type="submit" disabled={adding}>
+              {adding ? <><i className="fas fa-spinner fa-spin" style={{ marginRight: '6px' }}></i>Adding...</> : <><i className="fas fa-plus" style={{ marginRight: '6px' }}></i>Add</>}
+            </button>
           </div>
         </form>
       </div>
@@ -242,29 +308,37 @@ function Dashboard({ token, onLogout }: Props) {
       )}
 
       <div style={styles.transactionsSection}>
-        <div style={styles.transTitle}><i className="fas fa-list" style={{ marginRight: '8px', color: '#3b82f6' }}></i>Transactions ({transactions.length})</div>
-        {transactions.length === 0 ? (
-          <div style={styles.empty}>No transactions yet. Add one above!</div>
+        <div style={styles.transTitle}><i className="fas fa-list" style={{ marginRight: '8px', color: '#3b82f6' }}></i>Transactions ({filteredTransactions.length})</div>
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <SearchBar value={transSearch} onChange={v => { setTransSearch(v); setTransPage(1); }} placeholder="Search description..." />
+          <FilterBar options={[{ label: 'All', value: 'all' }, { label: 'Income', value: 'income' }, { label: 'Expense', value: 'expense' }]} selected={transTypeFilter} onChange={v => { setTransTypeFilter(v); setTransPage(1); }} />
+          <FilterBar options={[{ label: 'All', value: 'all' }, ...CATEGORIES.map(c => ({ label: c, value: c }))]} selected={transCatFilter} onChange={v => { setTransCatFilter(v); setTransPage(1); }} />
+        </div>
+        {filteredTransactions.length === 0 ? (
+          <EmptyState icon="💳" title="No transactions yet" message="Add your first transaction using the form above" />
         ) : (
-          transactions.slice().reverse().map((t) => (
-            <div key={t.id} style={styles.transItem}>
-              <div style={styles.transLeft}>
-                <div style={{ ...styles.transDot, backgroundColor: t.type === 'income' ? '#22c55e' : '#ef4444' }}></div>
-                <div>
-                  <div style={styles.transDesc}>{t.description}</div>
-                  <div style={styles.transCat}>{t.category} &middot; {new Date(t.date).toLocaleDateString()}</div>
+          <>
+            {paginatedTransactions.map((t) => (
+              <div key={t.id} style={styles.transItem}>
+                <div style={styles.transLeft}>
+                  <div style={{ ...styles.transDot, backgroundColor: t.type === 'income' ? '#22c55e' : '#ef4444' }}></div>
+                  <div>
+                    <div style={styles.transDesc}>{t.description}</div>
+                    <div style={styles.transCat}>{t.category} &middot; {new Date(t.date).toLocaleDateString()}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ ...styles.transAmount, color: t.type === 'income' ? '#22c55e' : '#ef4444' }}>
+                    {t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)}
+                  </span>
+                  <button style={styles.deleteBtn} onClick={() => handleDelete(t.id)} disabled={deleting === t.id}>
+                    {deleting === t.id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>}
+                  </button>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ ...styles.transAmount, color: t.type === 'income' ? '#22c55e' : '#ef4444' }}>
-                  {t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)}
-                </span>
-                <button style={styles.deleteBtn} onClick={() => handleDelete(t.id)}>
-                  <i className="fas fa-trash-alt"></i>
-                </button>
-              </div>
-            </div>
-          ))
+            ))}
+            <Pagination currentPage={transPage} totalPages={totalTransPages} onPageChange={setTransPage} />
+          </>
         )}
       </div>
     </div>
