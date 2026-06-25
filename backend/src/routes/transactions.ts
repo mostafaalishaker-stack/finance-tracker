@@ -15,7 +15,8 @@ interface Transaction {
 
 const transactions: Transaction[] = [];
 let nextId = 1;
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
+if (!process.env.JWT_SECRET) { console.error('Missing JWT_SECRET env var'); process.exit(1); }
+const JWT_SECRET = process.env.JWT_SECRET;
 
 interface JwtPayload {
   id: number;
@@ -31,7 +32,7 @@ function authMiddleware(req: Request, res: Response): number | void {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    (req as any).userId = decoded.id;
+    (req as Request & { userId?: number }).userId = decoded.id;
     return decoded.id;
   } catch {
     res.status(401).json({ message: 'Invalid token' });

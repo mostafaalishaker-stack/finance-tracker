@@ -33,7 +33,6 @@ const CATEGORIES = [
   'Shopping', 'Health', 'Education', 'Salary', 'Freelance', 'Investment', 'Other',
 ]
 
-const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#06b6d4', '#a855f7']
 const PIE_COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16', '#06b6d4', '#a855f7', '#22c55e']
 
 const styles: Record<string, React.CSSProperties> = {
@@ -114,8 +113,8 @@ function Dashboard({ token, onLogout }: Props) {
       ])
       setTransactions(transRes.data)
       setSummary(summaryRes.data)
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to fetch data:', err)
     }
   }, [])
 
@@ -131,8 +130,8 @@ function Dashboard({ token, onLogout }: Props) {
       setAmount('')
       setDescription('')
       fetchData()
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to add transaction:', err)
     }
   }
 
@@ -140,8 +139,8 @@ function Dashboard({ token, onLogout }: Props) {
     try {
       await api.delete(`/transactions/${id}`)
       fetchData()
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Failed to delete transaction:', err)
     }
   }
 
@@ -176,16 +175,31 @@ function Dashboard({ token, onLogout }: Props) {
         <div style={styles.formTitle}><i className="fas fa-plus-circle" style={{ marginRight: '8px', color: '#22c55e' }}></i>Add Transaction</div>
         <form onSubmit={handleAdd}>
           <div style={styles.formRow}>
-            <select style={styles.select} value={type} onChange={(e) => setType(e.target.value as 'income' | 'expense')}>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-            <input style={styles.input} type="number" placeholder="Amount" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-            <select style={styles.select} value={category} onChange={(e) => setCategory(e.target.value)}>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input style={styles.input} type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-            <input style={styles.input} type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8' }}>
+              Type
+              <select style={styles.select} value={type} onChange={(e) => setType(e.target.value as 'income' | 'expense')}>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+            </label>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8' }}>
+              Amount
+              <input style={styles.input} type="number" placeholder="Amount" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+            </label>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8' }}>
+              Category
+              <select style={styles.select} value={category} onChange={(e) => setCategory(e.target.value)}>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8' }}>
+              Description
+              <input style={styles.input} type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
+            </label>
+            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8' }}>
+              Date
+              <input style={styles.input} type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            </label>
             <button style={styles.addBtn} type="submit"><i className="fas fa-plus" style={{ marginRight: '6px' }}></i>Add</button>
           </div>
         </form>

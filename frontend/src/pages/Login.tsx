@@ -97,7 +97,9 @@ function Login({ onLogin }: Props) {
         <div style={styles.subtitle}>{isRegister ? 'Create an account' : 'Welcome back'}</div>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleSubmit}>
+          <label htmlFor="login-email" style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Email</label>
           <input
+            id="login-email"
             style={styles.input}
             type="email"
             placeholder="Email"
@@ -105,7 +107,9 @@ function Login({ onLogin }: Props) {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
+          <label htmlFor="login-password" style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '4px' }}>Password</label>
           <input
+            id="login-password"
             style={styles.input}
             type="password"
             placeholder="Password"

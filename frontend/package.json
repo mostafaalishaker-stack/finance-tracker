@@ -2,7 +2,7 @@
   "name": "finance-tracker-frontend",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "dev": "vite", "build": "tsc && vite build" },
+  "scripts": { "dev": "vite", "start": "vite", "build": "tsc && vite build" },
   "dependencies": {
     "react": "^18.3.1", "react-dom": "^18.3.1", "axios": "^1.7.7",
     "recharts": "^2.13.3"
